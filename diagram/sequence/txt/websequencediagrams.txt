@@ -1,0 +1,57 @@
+******************************************************************
+* Ticket Service - text to generate sequence diagrams
+* https://www.websequencediagrams.com/
+******************************************************************
+
+******************************************************************
+title Number of Available Seats
+
+TicketServiceCLIApplication->TicketService: numSeatsAvailabe()
+TicketService->TicketRepository: findVenueById(venueId)
+TicketRepository->TicketService: returns venue
+TicketService->TicketService: findActiveSeatHolds(venueId)
+TicketService->TicketRepository: findAllSeatHoldsByVenueId(venueId)
+TicketRepository->TicketService: return seatHolds
+Note right of TicketService: filters out reserved and expired seatHolds
+TicketService->TicketRepository: deleteSeatHold
+Note right of TicketService: simulates archiving by removing older seat holds
+TicketService->TicketService: calculates available seats for venue
+TicketService->TicketServiceCLIApplication: return number of available seats
+******************************************************************
+
+******************************************************************
+title Find and Hold Seats
+
+TicketServiceCLIApplication->TicketService: findAndHoldSeats(numSeats, customerEmail)
+TicketService->TicketService: numSeatsAvailable()
+TicketService->TicketService: findActiveSeatHolds(venueId)
+TicketService->TicketRepository: findAllSeatHoldsByVenueId(venueId)
+TicketRepository->TicketService: return seatHolds
+Note right of TicketService: filters out reserved and expired seatHolds
+TicketService->TicketRepository: deleteSeatHold
+Note right of TicketService: simulates archiving by removing older seat holds
+TicketService->TicketService: isExistingSeatHoldForCustomer(customer, activeSeatHolds)
+Note right of TicketService: returns holdId -2 if customer has active seat hold
+TicketService->TicketRepository: findVenueById(venueId)
+TicketRepository->TicketService: venue
+TicketService->TicketService: findBestSeatsAvailable(numSeats, venueNumSeats, activeSeatHolds);
+Note right of TicketService: return best seats available
+TicketService->TicketRepository: saveSeatHold(seatHold)
+Note right of TicketService: loop as each seat has seatHold
+TicketService->TicketServiceCLIApplication: return seatHold
+Note right of TicketServiceCLIApplication: contains the holdId used for the 1..x seatHold(s)
+******************************************************************
+
+******************************************************************
+title Reserve Seats
+
+TicketServiceCLIApplication->TicketService: reserveSeats(seatHoldId, customerEmail)
+TicketService->TicketService: findCustomerSeatHoldsByHoldId(seatHoldId)
+Note right of TicketService: returns reservationId -1 if seatHoldId not found
+Note right of TicketService: returns reservationId -2 if submitted email does not match email of seatHold
+Note right of TicketService: returns reservationId -3 if seatHoldId has expired
+TicketService->TicketRepository: saveSeatHold(seatHold);
+Note right of TicketService: loop as each seat has seatHold
+Note right of TicketService: updates each seatHold with reservationId, time, and a confirmation
+TicketService->TicketServiceCLIApplication: return reservationId
+******************************************************************
